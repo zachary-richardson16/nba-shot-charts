@@ -1,0 +1,296 @@
+---
+title: "NBA Project 1"
+author: "Zachary Richardson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r include=FALSE}
+## Load packages
+library(tidyverse)
+library(ggplot2)
+```
+
+## Create NBA Half-court
+```{r}
+## Initialize list of half-court dimensions (all listed in feet)
+court_vertices = data.frame(
+x = c(-25, 25, 25, -25, -25),
+y = c(0, 0, 47, 47, 0))
+
+halfcourt_length = 94/2
+court_width = 50
+
+free_throw_line = -6:6
+free_throw_distance = 19
+
+center_hoop = 5.25
+hoop_radius = .75
+
+FT_center_arc_x = 0
+FT_center_arc_y = 19
+FT_arc_radius = 6
+
+hoop_arc_x = 0
+hoop_arc_y = 5.25
+hoop_arc_radius = .75
+
+halfcourt_inner_circle_x = 0
+halfcourt_inner_circle_y = 47 #half-court length
+halfcourt_inner_circle_radius = 2
+
+halfcourt_outer_circle_x = 0
+halfcourt_outer_circle_y = 47 #half-court length
+halfcourt_outer_circle_radius = 6
+
+restricted_area_x = 0
+restricted_area_y = 5.25
+restricted_area_radius = 4
+
+three_arc_x <- c(-22, 22)
+three_arc_y <- c(14, 14)
+three_arc_radius = 23.75
+```
+
+
+```{r}
+## Note: All lines are 2" thick
+## *Need to fix 3 point arc and restricted area arc*
+
+
+## Initialize blank court
+court <- ggplot() +
+  
+  ## Create dimensions of the halfcourt
+  xlim(-court_width/2, court_width/2) +
+  ylim(0, halfcourt_length) +
+  
+  ## Remove any grid lines
+  theme_void() +
+  
+  ## Remove legend
+  theme(legend.position = "none") +
+  
+  ## Override aspect ratio to correct dimensions are displayed
+  coord_fixed(ratio=1) +
+
+  ## Add out of bounds lines
+  geom_path(aes(x=-25:25, y=0)) +
+  geom_path(aes(x=-25, y=0:47)) +
+  geom_path(aes(x=25, y=0:47)) +
+  
+  ## Add halfcourt line
+  geom_path(aes(x=-25:25, y=47)) +
+  
+  ## Add free throw area
+  geom_path(aes(x=-8:8, y=19)) +
+  geom_path(aes(x=-6, y=0:19)) + geom_path(aes(x=6, y=0:19)) +
+  
+  ## Add paint
+  geom_path(aes(x=-8, y=0:19)) + geom_path(aes(x=8, y=0:19)) +
+  
+  ## Add backboard
+  geom_path(aes(x=-3:3, y=4)) +
+  
+  ## Add volleyball line(?)
+  geom_path(aes(x=-25:-22, y=28)) + geom_path(aes(x=22:25, y=28)) +
+  
+  ## Add hoop
+  geom_path(aes(x = hoop_arc_x + hoop_arc_radius * cos(seq(0, 2*pi, length.out=100)), 
+                y = hoop_arc_y + hoop_arc_radius * sin(seq(0, 2*pi, length.out=100)))) +
+  
+  ## Add free throw circle
+  geom_path(aes(x = FT_center_arc_x + FT_arc_radius * cos(seq(0, pi, length.out=100)),
+                y = FT_center_arc_y + FT_arc_radius * sin(seq(0, pi, length.out=100)))) +
+  
+  geom_path(aes(x = FT_center_arc_x + FT_arc_radius * cos(seq(pi, 2*pi, length.out=100)),
+                y = FT_center_arc_y + FT_arc_radius * sin(seq(pi, 2*pi, length.out=100))), linetype="longdash") +
+
+  ## Add halfcourt inner circle
+  geom_path(aes(x = halfcourt_inner_circle_x + halfcourt_inner_circle_radius * cos(seq(pi, 2*pi, length.out=100)),
+                y = halfcourt_inner_circle_y + halfcourt_inner_circle_radius * sin(seq(pi, 2*pi, length.out=100)))) +
+
+  ## Add halfcourt outer circle
+  geom_path(aes(x = halfcourt_outer_circle_x + halfcourt_outer_circle_radius * cos(seq(pi, 2*pi, length.out=100)),
+                y = halfcourt_outer_circle_y + halfcourt_outer_circle_radius * sin(seq(pi, 2*pi, length.out=100)))) +
+  
+  ## Add restricted area
+  geom_path(aes(x = restricted_area_x + restricted_area_radius * cos(seq(0, pi, length.out=100)),
+                y = restricted_area_y + restricted_area_radius * sin(seq(0, pi, length.out=100)))) +
+  
+  ## Add corner three
+  geom_path(aes(x=-22, y=0:14)) + geom_path(aes(x=22, y=0:14)) +
+  
+  ## Add three point arc
+  geom_path(aes(x = hoop_arc_x + three_arc_radius * cos(seq(0.375, .879*pi, length.out=100)),
+                y = hoop_arc_y + three_arc_radius * sin(seq(0.375, .879*pi, length.out=100)))) +
+  
+  ## Add court color
+  geom_polygon(data=court_vertices, aes(x, y), fill="burlywood4", alpha=0.5)
+
+court
+```
+
+
+
+```{r}
+## Create a function to create a blank court
+draw.court <- function(court_vertices, 
+                       halfcourt_length, 
+                       court_width, 
+                       free_throw_line,
+                       free_throw_distance,
+                       center_hoop,
+                       hoop_radius,
+                       FT_center_arc_x,
+                       FT_center_arc_y,
+                       FT_arc_radius,
+                       hoop_arc_x,
+                       hoop_arc_y,
+                       hoop_arc_radius,
+                       halfcourt_inner_circle_x,
+                       halfcourt_inner_circle_y,
+                       halfcourt_inner_circle_radius,
+                       halfcourt_outer_circle_x,
+                       halfcourt_outer_circle_y,
+                       halfcourt_outer_circle_radius,
+                       restricted_area_x,
+                       restricted_area_y,
+                       restricted_area_radius,
+                       three_arc_radius){
+  court <- ggplot() +
+  
+  ## Create dimensions of the halfcourt
+  xlim(-court_width/2, court_width/2) +
+  ylim(0, halfcourt_length) +
+  
+  ## Remove any grid lines
+  theme_void() +
+  
+  ## Remove legend
+  theme(legend.position = "none") +
+  
+  ## Override aspect ratio to correct dimensions are displayed
+  coord_fixed(ratio=1) +
+
+  ## Add out of bounds lines
+  geom_path(aes(x=-25:25, y=0)) +
+  geom_path(aes(x=-25, y=0:47)) +
+  geom_path(aes(x=25, y=0:47)) +
+  
+  ## Add halfcourt line
+  geom_path(aes(x=-25:25, y=47)) +
+  
+  ## Add free throw area
+  geom_path(aes(x=-8:8, y=19)) +
+  geom_path(aes(x=-6, y=0:19)) + geom_path(aes(x=6, y=0:19)) +
+  
+  ## Add paint
+  geom_path(aes(x=-8, y=0:19)) + geom_path(aes(x=8, y=0:19)) +
+  
+  ## Add corner three
+  geom_path(aes(x=-22, y=0:14)) + geom_path(aes(x=22, y=0:14)) +
+  
+  ## Add backboard
+  geom_path(aes(x=-3:3, y=4)) +
+  
+  ## Add volleyball line(?)
+  geom_path(aes(x=-25:-22, y=28)) + geom_path(aes(x=22:25, y=28)) +
+  
+  ## Add hoop
+  geom_path(aes(x = hoop_arc_x + hoop_arc_radius * cos(seq(0, 2*pi, length.out=100)), 
+                y = hoop_arc_y + hoop_arc_radius * sin(seq(0, 2*pi, length.out=100)))) +
+  
+  ## Add free throw circle
+  geom_path(aes(x = FT_center_arc_x + FT_arc_radius * cos(seq(0, pi, length.out=100)),
+                y = FT_center_arc_y + FT_arc_radius * sin(seq(0, pi, length.out=100)))) +
+  
+  geom_path(aes(x = FT_center_arc_x + FT_arc_radius * cos(seq(pi, 2*pi, length.out=100)),
+                y = FT_center_arc_y + FT_arc_radius * sin(seq(pi, 2*pi, length.out=100))), linetype="longdash") +
+
+  ## Add halfcourt inner circle
+  geom_path(aes(x = halfcourt_inner_circle_x + halfcourt_inner_circle_radius * cos(seq(pi, 2*pi, length.out=100)),
+                y = halfcourt_inner_circle_y + halfcourt_inner_circle_radius * sin(seq(pi, 2*pi, length.out=100)))) +
+
+  ## Add halfcourt outer circle
+  geom_path(aes(x = halfcourt_outer_circle_x + halfcourt_outer_circle_radius * cos(seq(pi, 2*pi, length.out=100)),
+                y = halfcourt_outer_circle_y + halfcourt_outer_circle_radius * sin(seq(pi, 2*pi, length.out=100)))) +
+  
+  ## Add restricted area
+  geom_path(aes(x = restricted_area_x + restricted_area_radius * cos(seq(0, pi, length.out=100)),
+                y = restricted_area_y + restricted_area_radius * sin(seq(0, pi, length.out=100)))) +
+  
+  ## Add three point arc
+  geom_path(aes(x = hoop_arc_x + three_arc_radius * cos(seq(0.375, .879*pi, length.out=100)),
+                y = hoop_arc_y + three_arc_radius * sin(seq(0.375, .879*pi, length.out=100)))) +
+  
+  ## Add court color
+  geom_polygon(data=court_vertices, aes(x, y), fill="burlywood4", alpha=0.5)
+  
+  print(court)
+}
+
+test.court <- draw.court(court_vertices, 
+               halfcourt_length, 
+               court_width, 
+               free_throw_line,
+               free_throw_distance,
+               center_hoop,
+               hoop_radius,
+               FT_center_arc_x,
+               FT_center_arc_y,
+               FT_arc_radius,
+               hoop_arc_x,
+               hoop_arc_y,
+               hoop_arc_radius,
+               halfcourt_inner_circle_x,
+               halfcourt_inner_circle_y,
+               halfcourt_inner_circle_radius,
+               halfcourt_outer_circle_x,
+               halfcourt_outer_circle_y,
+               halfcourt_outer_circle_radius,
+               restricted_area_x,
+               restricted_area_y,
+               restricted_area_radius,
+               three_arc_radius)
+```
+
+## Create Player Shot Charts
+```{r}
+## Import 2022-2023 NBA shot data
+NBA_shot_data = read.csv("NBA_2023_Shots.csv")
+
+head(NBA_shot_data)
+```
+
+```{r}
+## Filter into Tatum shots for 1/16/2023 game @CHA
+tatum = NBA_shot_data %>%
+  filter(PLAYER_NAME=="Jayson Tatum" & GAME_DATE=="01-16-2023") %>%
+  select(-c(SEASON_1, TEAM_ID, PLAYER_ID, POSITION_GROUP, GAME_ID))
+
+head(tatum)
+```
+
+```{r}
+## Add Tatum's shots
+Tatum_0116_shot_chart <- court + 
+  geom_point(data = tatum, aes(x=LOC_X, y=LOC_Y, color=SHOT_MADE), shape=17, size=2.5)
+
+Tatum_0116_shot_chart
+```
+
+```{r}
+## Shot chart for Steph Curry 2022-2023 regular season
+Curry <- NBA_shot_data %>%
+  filter(PLAYER_NAME == "Stephen Curry")
+
+Curry_shot_chart <- court + geom_point(data = Curry, aes(x=LOC_X, y=LOC_Y, color=SHOT_MADE), shape=17, size=2)
+Curry_shot_chart
+```
+
+
